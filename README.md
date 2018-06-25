@@ -12,7 +12,7 @@ $HOME/.config/mmpost/config.json
         "team": "",
         "channel": "",
         "maxlines": 50,
-        "lang": "",
+        "syntax": "",
         "filename": ""
 }
 ```
@@ -24,13 +24,13 @@ Account Setings -> Security -> Personal Access Tokens -> Create New Token.
 
 ## Usage examples
 
-Less than maxlines with a lang
+Less than maxlines with a syntax
 ```bash
-cat file.go | mmpost -lang go
+cat file.go | mmpost -syntax go
 ```
 More than maxlines (will be an attachment)
 ```bash
-cat file.go | mmpost -lang go --filename file.go
+cat file.go | mmpost -syntax go --filename file.go
 ```
 See config flags
 ```bash
@@ -38,5 +38,5 @@ mmpost -h
 ```
 File over 16300 bytes required to be an attachment so you have to use --filename
 ```bash
-cat file.go | mmpost -lang go --filename file.go
+cat file.go | mmpost -syntax go --filename file.go
 ```

@@ -18,7 +18,7 @@ type configMMPost struct {
 	Team     string `json:"team"`
 	Channel  string `json:"channel"`
 	MaxLines int    `json:"maxlines" cfgDefault:"50"`
-	Lang     string `json:"lang"`
+	Syntax   string `json:"syntax"`
 	Filename string `json:"filename"`
 }
 
@@ -88,7 +88,7 @@ func main() {
 		if strings.Count(messageString, "\n") <= config.MaxLines {
 			post := &model.Post{}
 			post.ChannelId = channel.Id
-			post.Message = "```" + config.Lang + "\n" + messageString + "```\n"
+			post.Message = "```" + config.Syntax + "\n" + messageString + "```\n"
 
 			if _, resp := client.CreatePost(post); resp.Error != nil {
 				fmt.Println("We failed to send a message to the channel")
