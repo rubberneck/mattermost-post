@@ -1,5 +1,5 @@
 # mmpost
-Like pbcopy/pbpost for [Mattermost](https://mattermost.com/)
+Like pbcopy/pbpaste for [Mattermost](https://mattermost.com/)
 
 
 ## Config 
