@@ -56,7 +56,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	if pipeInfo.Size() <= 0 {
+	stdinReader := io.Reader(os.Stdin)
+	messageBytes, err := ioutil.ReadAll(stdinReader)
+
+	if err != nil {
+		fmt.Println("ERROR: Reading all from stdin")
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	messageString := string(messageBytes)
+
+	if cap(messageBytes) <= 0 {
 		fmt.Println("ERROR: pipe was empty")
 		os.Exit(1)
 	}
@@ -73,49 +84,36 @@ func main() {
 		channel = rchannel
 	}
 
-	if pipeInfo.Size() > 0 && pipeInfo.Size() <= 16300 {
-		stdinReader := io.Reader(os.Stdin)
-		messageBytes, err := ioutil.ReadAll(stdinReader)
+	if strings.Count(messageString, "\n") <= config.MaxLines && cap(messageBytes) <= 16300 {
+		post := &model.Post{}
+		post.ChannelId = channel.Id
+		post.Message = "```" + config.Syntax + "\n" + messageString + "```\n"
 
-		if err != nil {
-			fmt.Println("ERROR: Reading all from stdin")
-			fmt.Println(err)
+		if _, resp := client.CreatePost(post); resp.Error != nil {
+			fmt.Println("We failed to send a message to the channel")
+			fmt.Println(resp.Error)
 			os.Exit(1)
 		}
+	} else {
+		if config.Filename != "" {
+			fileUploadResponse, response := client.UploadFile(messageBytes, channel.Id, config.Filename)
+			if response.Error != nil {
+				fmt.Println("ERROR: Failed to upload file.")
+				fmt.Println(response.Error)
+				os.Exit(1)
+			}
 
-		messageString := string(messageBytes)
-
-		if strings.Count(messageString, "\n") <= config.MaxLines {
 			post := &model.Post{}
 			post.ChannelId = channel.Id
-			post.Message = "```" + config.Syntax + "\n" + messageString + "```\n"
-
+			post.FileIds = []string{fileUploadResponse.FileInfos[0].Id}
 			if _, resp := client.CreatePost(post); resp.Error != nil {
 				fmt.Println("We failed to send a message to the channel")
 				fmt.Println(resp.Error)
 				os.Exit(1)
 			}
 		} else {
-			if config.Filename != "" {
-				fileUploadResponse, response := client.UploadFile(messageBytes, channel.Id, config.Filename)
-				if response.Error != nil {
-					fmt.Println("ERROR: Failed to upload file.")
-					fmt.Println(response.Error)
-					os.Exit(1)
-				}
-
-				post := &model.Post{}
-				post.ChannelId = channel.Id
-				post.FileIds = []string{fileUploadResponse.FileInfos[0].Id}
-				if _, resp := client.CreatePost(post); resp.Error != nil {
-					fmt.Println("We failed to send a message to the channel")
-					fmt.Println(resp.Error)
-					os.Exit(1)
-				}
-			} else {
-				fmt.Println("ERROR: text longer than " + fmt.Sprint(config.MaxLines) + " lines requires --filename")
-				os.Exit(1)
-			}
+			fmt.Println("ERROR: text longer than " + fmt.Sprint(config.MaxLines) + " lines or larger than 16300 bytes requires --filename")
+			os.Exit(1)
 		}
 	}
 }
